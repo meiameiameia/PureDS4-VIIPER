@@ -7,12 +7,10 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/Alia5/VIIPER/internal/config"
 	"github.com/Alia5/VIIPER/internal/configpaths"
 	"github.com/Alia5/VIIPER/internal/log"
-	"github.com/Alia5/VIIPER/internal/updater"
 
 	_ "github.com/Alia5/VIIPER/internal/registry" // Register all device handlers
 
@@ -55,16 +53,6 @@ func main() {
 
 	ctx.Bind(logger)
 	ctx.BindTo(rawLogger, (*log.RawLogger)(nil))
-
-	if cli.UpdateNotify != config.UpdateNotifyNone {
-		go func() {
-			time.Sleep(10 * time.Second)
-			updater.CheckUpdate(Version, cli.UpdateNotify)
-			for range time.NewTicker(1 * time.Hour).C {
-				updater.CheckUpdate(Version, cli.UpdateNotify)
-			}
-		}()
-	}
 
 	err = ctx.Run()
 	ctx.FatalIfErrorf(err)

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Alia5/VIIPER/device"
-	"github.com/Alia5/VIIPER/device/keyboard"
+	"github.com/Alia5/VIIPER/device/dualshock4"
 	htesting "github.com/Alia5/VIIPER/internal/_testing" // nolint
 	th "github.com/Alia5/VIIPER/internal/_testing"       // nolint
 	"github.com/Alia5/VIIPER/internal/log"
@@ -29,7 +29,7 @@ func TestDeviceStreamHandler_Dispatch(t *testing.T) {
 	bus, err := virtualbus.NewWithBusID(90001)
 	require.NoError(t, err)
 	require.NoError(t, srv.AddBus(bus))
-	dev, err := keyboard.New(nil)
+	dev, err := dualshock4.New(nil)
 	require.NoError(t, err)
 	devCtx, err := bus.Add(dev)
 	require.NoError(t, err)
@@ -55,15 +55,18 @@ func TestDeviceStreamHandler_Dispatch(t *testing.T) {
 	require.NotNil(t, dv)
 
 	handlerCalled := make(chan bool, 1)
-	testReg := th.CreateMockRegistration(t, "keyboard",
-		func(o *device.CreateOptions) (pusb.Device, error) { return keyboard.New(o) },
+	testReg := th.CreateMockRegistration(t, "dualshock4",
+		func(o *device.CreateOptions) (pusb.Device, error) { return dualshock4.New(o) },
 		func(conn net.Conn, d *pusb.Device, l *slog.Logger) error {
 			handlerCalled <- true
 			return nil
 		},
 	)
 
-	api.RegisterDevice("keyboard", testReg)
+	previous := api.GetRegistration("dualshock4")
+	require.NotNil(t, previous)
+	t.Cleanup(func() { api.RegisterDevice("dualshock4", previous) })
+	api.RegisterDevice("dualshock4", testReg)
 
 	clientConn, serverConn := net.Pipe()
 	defer clientConn.Close() //nolint:errcheck
@@ -92,7 +95,7 @@ func TestAPIServer_StreamRoute_DispatchE2E(t *testing.T) {
 	bus, err := virtualbus.NewWithBusID(70001)
 	require.NoError(t, err)
 	require.NoError(t, srv.AddBus(bus))
-	dev, err := keyboard.New(nil)
+	dev, err := dualshock4.New(nil)
 	require.NoError(t, err)
 	devCtx, err := bus.Add(dev)
 	require.NoError(t, err)
@@ -111,14 +114,17 @@ func TestAPIServer_StreamRoute_DispatchE2E(t *testing.T) {
 	require.NotEmpty(t, deviceID)
 
 	handlerCalled := make(chan struct{}, 1)
-	testReg := th.CreateMockRegistration(t, "keyboard",
-		func(o *device.CreateOptions) (pusb.Device, error) { return keyboard.New(o) },
+	testReg := th.CreateMockRegistration(t, "dualshock4",
+		func(o *device.CreateOptions) (pusb.Device, error) { return dualshock4.New(o) },
 		func(conn net.Conn, devPtr *pusb.Device, l *slog.Logger) error {
 			handlerCalled <- struct{}{}
 			return nil
 		},
 	)
-	api.RegisterDevice("keyboard", testReg)
+	previous := api.GetRegistration("dualshock4")
+	require.NotNil(t, previous)
+	t.Cleanup(func() { api.RegisterDevice("dualshock4", previous) })
+	api.RegisterDevice("dualshock4", testReg)
 
 	c, err := net.Dial("tcp", addr)
 	require.NoError(t, err)

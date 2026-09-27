@@ -8,11 +8,7 @@ import (
 	"time"
 
 	devicebase "github.com/Alia5/VIIPER/device"
-	"github.com/Alia5/VIIPER/device/dualsense"
 	"github.com/Alia5/VIIPER/device/dualshock4"
-	"github.com/Alia5/VIIPER/device/keyboard"
-	"github.com/Alia5/VIIPER/device/mouse"
-	"github.com/Alia5/VIIPER/device/ns2pro"
 	"github.com/Alia5/VIIPER/device/xbox360"
 	"github.com/Alia5/VIIPER/internal/server/api"
 	usbdesc "github.com/Alia5/VIIPER/usb"
@@ -24,8 +20,6 @@ var identityTestSequence atomic.Uint64
 func TestControllerInputDescriptorsAdvertiseOneMillisecondMaximum(t *testing.T) {
 	ds4, err := dualshock4.New(nil)
 	require.NoError(t, err)
-	ds5, err := dualsense.New(nil)
-	require.NoError(t, err)
 
 	tests := []struct {
 		name       string
@@ -35,9 +29,6 @@ func TestControllerInputDescriptorsAdvertiseOneMillisecondMaximum(t *testing.T) 
 	}{
 		{name: "Xbox 360", descriptor: descriptorPtr(xbox360.MakeDescriptor()), address: 0x81, interval: 1},
 		{name: "DualShock 4", descriptor: ds4.GetDescriptor(), address: dualshock4.EndpointIn, interval: 1},
-		// A high-speed interval of four is 2^(4-1) 125-us microframes = 1 ms.
-		{name: "DualSense", descriptor: ds5.GetDescriptor(), address: dualsense.EndpointIn, interval: 4},
-		{name: "Switch 2 Pro", descriptor: descriptorPtr(ns2pro.MakeDescriptor()), address: ns2pro.EndpointHIDIn, interval: 1},
 	}
 
 	for _, test := range tests {
@@ -64,31 +55,15 @@ func TestConcurrentInputPublishersNeverBlock(t *testing.T) {
 	require.NoError(t, err)
 	ds4, err := dualshock4.New(nil)
 	require.NoError(t, err)
-	ds5, err := dualsense.New(nil)
-	require.NoError(t, err)
-	switchPro, err := ns2pro.New(nil)
-	require.NoError(t, err)
-	keys, err := keyboard.New(nil)
-	require.NoError(t, err)
-	pointer, err := mouse.New(nil)
-	require.NoError(t, err)
 
 	xboxState := xbox360.InputState{}
 	ds4State := dualshock4.InputState{}
-	ds5State := dualsense.InputState{}
-	switchState := ns2pro.InputState{}
-	keyboardState := keyboard.InputState{}
-	mouseState := mouse.InputState{}
 	tests := []struct {
 		name   string
 		update func()
 	}{
 		{name: "Xbox 360", update: func() { xbox.UpdateInputState(xboxState) }},
 		{name: "DualShock 4", update: func() { ds4.UpdateInputState(&ds4State) }},
-		{name: "DualSense", update: func() { ds5.UpdateInputState(&ds5State) }},
-		{name: "Switch 2 Pro", update: func() { switchPro.UpdateInputState(switchState) }},
-		{name: "keyboard", update: func() { keys.UpdateInputState(keyboardState) }},
-		{name: "mouse", update: func() { pointer.UpdateInputState(mouseState) }},
 	}
 
 	for _, test := range tests {
@@ -125,8 +100,6 @@ func TestConcurrentControllerIdentityReservationsAreUnique(t *testing.T) {
 		deviceType string
 	}{
 		{name: "DualShock 4", deviceType: "dualshock4"},
-		{name: "DualSense", deviceType: dualsense.DeviceTypeCombinedAudioDuplexV5},
-		{name: "Switch 2 Pro", deviceType: "ns2pro"},
 	}
 
 	for _, test := range tests {

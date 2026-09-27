@@ -17,7 +17,6 @@ import (
 	"github.com/Alia5/VIIPER/internal/server/api/auth"
 	"github.com/Alia5/VIIPER/internal/server/api/handler"
 	"github.com/Alia5/VIIPER/internal/server/usb"
-	"github.com/Alia5/VIIPER/internal/tray"
 )
 
 const keyFileName = "viiper.key.txt"
@@ -40,13 +39,6 @@ func (s *Server) StartServer(ctx context.Context, logger *slog.Logger, rawLogger
 		logger.Error("Refusing to start VIIPER with an incompatible USB/IP runtime", "error", err)
 		return err
 	}
-
-	ctx, cancel := context.WithCancel(ctx)
-	stopTray := tray.Run(ctx, cancel)
-	defer func() {
-		cancel()
-		stopTray()
-	}()
 
 	s.USBServerConfig.ConnectionTimeout = s.ConnectionTimeout
 	s.APIServerConfig.ConnectionTimeout = s.ConnectionTimeout
@@ -74,12 +66,6 @@ func (s *Server) StartServer(ctx context.Context, logger *slog.Logger, rawLogger
 		}
 		s.APIServerConfig.Password = newPwd
 		logger.Info("Generated API server password", "path", keyFilePath)
-		logger.Info("-------------------------------------")
-		logger.Info("Your VIIPER API server password is:")
-		logger.Info("-------------------------------------")
-		logger.Info(newPwd)
-		logger.Info("-------------------------------------")
-		logger.Info("You can change this password at any time by editing the file")
 	}
 
 	usbSrv := usb.New(s.USBServerConfig, logger, rawLogger)

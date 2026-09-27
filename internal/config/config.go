@@ -23,14 +23,15 @@ type Log struct {
 type CLI struct {
 	// Global
 	ConfigPath   string       `help:"Path to configuration file (json|yaml|toml)" name:"config" env:"VIIPER_CONFIG"`
-	UpdateNotify UpdateNotify `help:"Update notification level: none, stable, prerelease" default:"stable" env:"VIIPER_UPDATE_NOTIFY"`
+	UpdateNotify UpdateNotify `help:"Deprecated and ignored; PureDS4 controls backend updates" default:"none" env:"VIIPER_UPDATE_NOTIFY"`
 	Log          `embed:"" prefix:"log."`
-	codegenCommand
 
 	Server cmd.Server `cmd:"" help:"Start the VIIPER USB-IP server" default:""`
-	Proxy  cmd.Proxy  `cmd:"" help:"Start the VIIPER USB-IP proxy"`
+}
 
-	Config    cmd.ConfigCommand `cmd:"" help:"Manage configuration files"`
-	Install   cmd.Install       `cmd:"" help:"Add the current VIIPER executable to system startup and runs it (creates a Systemd service on Linux)"`
-	Uninstall cmd.Uninstall     `cmd:"" help:"Remove any VIIPER system startup configuration / Systemd service"`
+// Preserve compatibility with old configuration while making all update
+// notification values inert. PureDS4 owns replacement of the backend binary.
+func (c *CLI) AfterApply() error {
+	c.UpdateNotify = UpdateNotifyNone
+	return nil
 }
