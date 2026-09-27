@@ -20,5 +20,6 @@ jobs:
         run: go test -count=1 ./...
       - name: Vet
         run: go vet ./...
-      - name: Build standalone backend
-        run: go build -tags release -trimpath -ldflags '-s -w' -o viiper.exe ./cmd/viiper
+      - name: Build Windows backend and verify notices
+        shell: pwsh
+        run: .\scripts\build-pureds4-backend.ps1 -OutputDir .\dist -RequireClean

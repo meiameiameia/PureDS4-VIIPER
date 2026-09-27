@@ -9,22 +9,16 @@ import (
 	"strings"
 
 	"github.com/Alia5/VIIPER/internal/config"
-	"github.com/Alia5/VIIPER/internal/configpaths"
 	"github.com/Alia5/VIIPER/internal/log"
 
 	_ "github.com/Alia5/VIIPER/internal/registry" // Register all device handlers
 
 	"github.com/alecthomas/kong"
-	kongtoml "github.com/alecthomas/kong-toml"
-	kongyaml "github.com/alecthomas/kong-yaml"
 	"golang.org/x/term"
 )
 
 func main() {
 	handlePlainHelpFlag()
-
-	userCfg := findUserConfig(os.Args[1:])
-	jsonPaths, yamlPaths, tomlPaths := configpaths.ConfigCandidatePaths(userCfg)
 
 	var cli config.CLI
 	ctx := kong.Parse(&cli,
@@ -32,10 +26,6 @@ func main() {
 		kong.Description(Description()),
 		kong.UsageOnError(),
 		kong.Help(helpWithASCIIArt),
-		// Load configuration from JSON/YAML/TOML in priority order; flags/env override config values.
-		kong.Configuration(kong.JSON, jsonPaths...),
-		kong.Configuration(kongyaml.Loader, yamlPaths...),
-		kong.Configuration(kongtoml.Loader, tomlPaths...),
 	)
 
 	logger, closeFiles, err := log.SetupLogger(cli.Log.Level, cli.Log.File) // nolint
@@ -66,18 +56,6 @@ func handlePlainHelpFlag() {
 			return
 		}
 	}
-}
-
-func findUserConfig(args []string) string {
-	for i, a := range args {
-		if strings.HasPrefix(a, "--config=") {
-			return a[len("--config="):]
-		}
-		if a == "--config" && i+1 < len(args) {
-			return args[i+1]
-		}
-	}
-	return os.Getenv("VIIPER_CONFIG")
 }
 
 func setupRawLogger(cli *config.CLI, logger *slog.Logger, closeFiles *[]io.Closer) log.RawLogger {

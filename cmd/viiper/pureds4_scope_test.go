@@ -47,3 +47,11 @@ func TestPureDS4BackendDoesNotOfferHostManagementCommands(t *testing.T) {
 		})
 	}
 }
+
+func TestPureDS4BackendDoesNotReadInheritedConfigFiles(t *testing.T) {
+	var cli config.CLI
+	parser, err := kong.New(&cli)
+	require.NoError(t, err)
+	_, err = parser.Parse([]string{"--config=server.yaml", "server"})
+	require.Error(t, err)
+}

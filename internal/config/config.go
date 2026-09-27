@@ -22,7 +22,6 @@ type Log struct {
 // CLI is the root command structure for Kong CLI parsing.
 type CLI struct {
 	// Global
-	ConfigPath   string       `help:"Path to configuration file (json|yaml|toml)" name:"config" env:"VIIPER_CONFIG"`
 	UpdateNotify UpdateNotify `help:"Deprecated and ignored; PureDS4 controls backend updates" default:"none" env:"VIIPER_UPDATE_NOTIFY"`
 	Log          `embed:"" prefix:"log."`
 

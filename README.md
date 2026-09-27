@@ -11,10 +11,11 @@ protocol while this fork is validated.
 The fork is limited to PureDS4's current virtual-controller contract: Xbox 360
 and DualShock 4, including the DS4 v3 audio device variants. DualSense, Switch
 2 Pro, keyboard, mouse, the shared-library build, and the built-in update
-checker have been removed. The command line exposes only the server; it does
-not install drivers, register startup, or manage system configuration. PureDS4
-owns backend installation, version pinning, and replacement. Future DualShock 3
-support is not implied by this fork.
+checker and inherited JSON/YAML/TOML configuration loading have been removed.
+The command line exposes only the server; it does not install drivers, register
+startup, or manage system configuration. PureDS4 owns backend installation,
+version pinning, and replacement. Future DualShock 3 support is not implied by
+this fork.
 
 This repository is source code, not a standalone Windows installer or an
 endorsement to replace a running backend. USB-IP driver installation and
@@ -22,12 +23,14 @@ machine-wide ownership remain PureDS4 installation concerns.
 
 ## Local verification
 
-With the Go version specified in `go.mod`:
+On Windows, with the Go version specified in `go.mod`, first run the source
+checks and then generate the Windows version resource, executable, and current
+dependency notices together:
 
 ```powershell
 go test -count=1 ./...
 go vet ./...
-go build -tags release -trimpath -ldflags '-s -w -X main.Version=0.1.0-pureds4-dev -X github.com/Alia5/VIIPER/internal/codegen/common.Version=0.1.0-pureds4-dev' -o viiper.exe ./cmd/viiper
+.\scripts\build-pureds4-backend.ps1 -OutputDir .\dist -RequireClean
 ```
 
 The build alone does not establish compatibility with a physical DS4, USB-IP,

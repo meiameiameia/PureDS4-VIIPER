@@ -4,7 +4,7 @@
 
 * Name: github.com/Alia5/VIIPER
 * Version: {{ $viiperVersion }}
-* License: [GPL-3.0](https://github.com/Alia5/VIIPER/blob/HEAD/LICENSE.txt)
+* License: [GPL-3.0](https://github.com/meiameiameia/PureDS4-VIIPER/blob/main/LICENSE.txt)
 
 VIIPER - Virtual Input over IP EmulatoR
 
