@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"unsafe"
 
+	serverpolicy "github.com/Alia5/VIIPER/internal/server"
 	"github.com/Alia5/VIIPER/usbip"
 	"golang.org/x/sys/windows"
 )
@@ -130,10 +131,7 @@ func attachViaIOCTL(_ context.Context, deviceExportMeta *usbip.ExportMeta, usbip
 
 	logger.Debug("Opened device handle")
 
-	ioctlData := attachIOCTL{Size: uint32(unsafe.Sizeof(attachIOCTL{}))}
-	copy(ioctlData.BusID[:], busID)
-	copy(ioctlData.Service[:], service)
-	copy(ioctlData.Host[:], "localhost")
+	ioctlData := newLocalAttachIOCTL(busID, service)
 	port, bytesReturned, err := submitAttachIOCTL(handle,
 		unsafe.Pointer(&ioctlData), ioctlData.Size, &ioctlData.PortOutput)
 	if err != nil {
@@ -154,6 +152,14 @@ func attachViaIOCTL(_ context.Context, deviceExportMeta *usbip.ExportMeta, usbip
 	return AutoAttachResult{
 		USBIPPort: port,
 	}, nil
+}
+
+func newLocalAttachIOCTL(busID, service string) attachIOCTL {
+	data := attachIOCTL{Size: uint32(unsafe.Sizeof(attachIOCTL{}))}
+	copy(data.BusID[:], busID)
+	copy(data.Service[:], service)
+	copy(data.Host[:], serverpolicy.LoopbackHost)
+	return data
 }
 
 func submitAttachIOCTL(handle windows.Handle, data unsafe.Pointer, size uint32,
@@ -185,7 +191,7 @@ func attachViaCommand(ctx context.Context, deviceExportMeta *usbip.ExportMeta, u
 		"--tcp-port",
 		strconv.FormatUint(uint64(usbipServerPort), 10),
 		"attach",
-		"-r", "localhost",
+		"-r", serverpolicy.LoopbackHost,
 		"-b", fmt.Sprintf("%d-%d", deviceExportMeta.BusID, deviceExportMeta.DevID),
 	)
 	output, err := cmd.CombinedOutput()

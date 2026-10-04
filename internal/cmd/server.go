@@ -13,6 +13,7 @@ import (
 
 	"github.com/Alia5/VIIPER/internal/configpaths"
 	"github.com/Alia5/VIIPER/internal/log"
+	serverpolicy "github.com/Alia5/VIIPER/internal/server"
 	"github.com/Alia5/VIIPER/internal/server/api"
 	"github.com/Alia5/VIIPER/internal/server/api/auth"
 	"github.com/Alia5/VIIPER/internal/server/api/handler"
@@ -34,7 +35,22 @@ func (s *Server) Run(logger *slog.Logger, rawLogger log.RawLogger) error {
 	return s.StartServer(ctx, logger, rawLogger)
 }
 
+// Validate is also a Kong hook, so unsafe CLI/environment overrides fail before
+// startup can probe drivers, create a key file, or bind either listener.
+func (s *Server) Validate() error {
+	if _, err := serverpolicy.LocalListenAddress(s.USBServerConfig.Addr); err != nil {
+		return fmt.Errorf("USB-IP: %w", err)
+	}
+	if _, err := serverpolicy.LocalListenAddress(s.APIServerConfig.Addr); err != nil {
+		return fmt.Errorf("API: %w", err)
+	}
+	return nil
+}
+
 func (s *Server) StartServer(ctx context.Context, logger *slog.Logger, rawLogger log.RawLogger) error {
+	if err := s.Validate(); err != nil {
+		return err
+	}
 	if err := requireUSBIPRuntime(); err != nil {
 		logger.Error("Refusing to start VIIPER with an incompatible USB/IP runtime", "error", err)
 		return err
@@ -79,11 +95,6 @@ func (s *Server) StartServer(ctx context.Context, logger *slog.Logger, rawLogger
 	case err := <-usbErrCh:
 		return err
 	case <-usbSrv.Ready():
-	}
-
-	if s.APIServerConfig.Addr == "" {
-		logger.Error("API server address must be set (default :3242).")
-		return fmt.Errorf("API server address must be set (default :3242).") // nolint
 	}
 
 	apiSrv := api.New(usbSrv, s.APIServerConfig.Addr, s.APIServerConfig, logger)

@@ -2,7 +2,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$OutputDir,
-    [string]$Version = '0.1.0-pureds4.1',
+    [string]$Version = '0.1.0-pureds4.2',
     [switch]$RequireClean
 )
 

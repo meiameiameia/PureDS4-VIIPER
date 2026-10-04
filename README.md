@@ -21,6 +21,13 @@ This repository is source code, not a standalone Windows installer or an
 endorsement to replace a running backend. USB-IP driver installation and
 machine-wide ownership remain PureDS4 installation concerns.
 
+The backend listens only on IPv4 loopback: `127.0.0.1:3241` for USB/IP and
+`127.0.0.1:3242` for the management API. The local USB/IP attach client uses the
+same address. CLI and environment overrides may change the port, but cannot
+enable wildcard, LAN, or remote listeners. The historical `localhost` spelling
+is normalized to `127.0.0.1` without DNS resolution. IPv6 listeners are not
+offered by this PureDS4 backend.
+
 ## Local verification
 
 On Windows, with the Go version specified in `go.mod`, first run the source

@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strconv"
 
+	serverpolicy "github.com/Alia5/VIIPER/internal/server"
 	"github.com/Alia5/VIIPER/usbip"
 )
 
@@ -23,7 +24,7 @@ func attachLocalhostClientImpl(ctx context.Context, deviceExportMeta *usbip.Expo
 		"--tcp-port",
 		strconv.FormatUint(uint64(usbipServerPort), 10),
 		"attach",
-		"-r", "localhost",
+		"-r", serverpolicy.LoopbackHost,
 		"-b", fmt.Sprintf("%d-%d", deviceExportMeta.BusID, deviceExportMeta.DevID),
 	)
 	output, err := cmd.CombinedOutput()

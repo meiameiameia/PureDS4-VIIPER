@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/Alia5/VIIPER/internal/log"
+	serverpolicy "github.com/Alia5/VIIPER/internal/server"
 	"github.com/Alia5/VIIPER/usb"
 	"github.com/Alia5/VIIPER/usbip"
 	"github.com/Alia5/VIIPER/virtualbus"
@@ -345,7 +346,11 @@ func (s *Server) Addr() string {
 
 // ListenAndServe starts the USB-IP server and handles incoming connections.
 func (s *Server) ListenAndServe() error {
-	ln, err := net.Listen("tcp", s.config.Addr)
+	addr, err := serverpolicy.LocalListenAddress(s.config.Addr)
+	if err != nil {
+		return err
+	}
+	ln, err := net.Listen("tcp4", addr)
 	if err != nil {
 		return err
 	}
@@ -490,7 +495,11 @@ func (s *Server) handleImport(conn net.Conn) (usb.Device, error) {
 	if err := usbip.ReadExactly(conn, rest[:]); err != nil {
 		return nil, fmt.Errorf("read import busid: %w", err)
 	}
-	reqBus := string(rest[:bytes.IndexByte(rest[:], 0)])
+	end := bytes.IndexByte(rest[:], 0)
+	if end <= 0 {
+		return nil, fmt.Errorf("invalid import busid: expected a non-empty NUL-terminated identifier")
+	}
+	reqBus := string(rest[:end])
 	s.logger.Info("Import request", "busid", reqBus)
 	var chosen usb.Device
 	var chosenMeta *usbip.ExportMeta
@@ -498,6 +507,9 @@ func (s *Server) handleImport(conn net.Conn) (usb.Device, error) {
 	for _, m := range s.getAllDeviceMetas() {
 		meta := m.Meta
 		end := bytes.IndexByte(meta.USBBusID[:], 0)
+		if end <= 0 {
+			continue
+		}
 		bid := string(meta.USBBusID[:end])
 		if bid == reqBus {
 			chosen = m.Dev

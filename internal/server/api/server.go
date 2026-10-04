@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	serverpolicy "github.com/Alia5/VIIPER/internal/server"
 	"github.com/Alia5/VIIPER/internal/server/api/auth"
 	apierror "github.com/Alia5/VIIPER/internal/server/api/error"
 	"github.com/Alia5/VIIPER/internal/server/usb"
@@ -96,7 +97,11 @@ func (s *Server) Addr() string {
 
 // Start listens on the configured address and serves incoming API commands.
 func (s *Server) Start() error {
-	ln, err := net.Listen("tcp", s.addr)
+	addr, err := serverpolicy.LocalListenAddress(s.addr)
+	if err != nil {
+		return err
+	}
+	ln, err := net.Listen("tcp4", addr)
 	if err != nil {
 		return err
 	}
